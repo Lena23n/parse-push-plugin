@@ -25,8 +25,8 @@ Installation
 Pick one of these two commands:
 
 ```
-phonegap local plugin add https://github.com/taivo/parse-push-plugin
-cordova plugin add https://github.com/taivo/parse-push-plugin
+phonegap local plugin add https://github.com/manishiitg/parse-push-plugin
+cordova plugin add https://github.com/manishiitg/parse-push-plugin
 ```
 
 ####Android devices without Google Cloud Messaging:
@@ -63,17 +63,45 @@ named MainApplication.java and define it this way
     package com.example.app;  //REPLACE THIS WITH YOUR package name
 
     import android.app.Application;
+    import org.apache.cordova.*;
     import com.parse.Parse;
+    import com.parse.ParseAnalytics;
+    import com.parse.ParseInstallation;
+    import com.parse.PushService;
+    import com.parse.ParsePush;
+    import com.parse.ParseCrashReporting;
 
     public class MainApplication extends Application {
 	    @Override
         public void onCreate() {
             super.onCreate();
+            ParseCrashReporting.enable(getApplicationContext());
             Parse.initialize(this, "YOUR_PARSE_APPID", "YOUR_PARSE_CLIENT_KEY");
-            //ParseInstallation.getCurrentInstallation().saveInBackground();
+            PushService.setDefaultPushCallback(this, CordovaApp.class);
+            ParsePush.subscribeInBackground("Broadcast");
+            ParseInstallation.getCurrentInstallation().saveInBackground();
         }
     }
     ```
+
+3.1
+Make changes to your Cordova Activity File
+```java
+public class CordovaApp extends CordovaActivity
+{
+    @Override
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        super.init(); 
+        // Track app opens.
+        ParseAnalytics.trackAppOpened(getIntent());  //add this line
+        // Set by <content src="index.html" /> in config.xml
+        loadUrl(launchUrl);
+    }
+}
+
+```    
 4. The final step is to register MainApplication in AndroidManifest.xml so it's used instead of the default.
 In the `<application>` tag, add the attribute `android:name="MainApplication"`. Obviously, you don't have
 to name your application class this way, but you have to use the same name in 3 and 4. 
